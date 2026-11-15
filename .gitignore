@@ -72,3 +72,7 @@ Package.resolved
 
 # Finder.
 .DS_Store
+
+# Archives build-deps.yml has made, to build against with
+# NUCLEANT_VLC_ARTIFACTS=1.
+Artifacts/

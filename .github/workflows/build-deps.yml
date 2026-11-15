@@ -1,0 +1,239 @@
+# Makes NucleantVLC's libvlc archives for every platform VideoLAN ships
+# libvlc for, and checks each one, a job per platform:
+#
+#   apple    LibVLC.xcframework.zip: macOS, iOS and the iOS Simulator
+#            (scripts/fetch_vlc.py, from VLC.app and MobileVLCKit). The
+#            package builds and its tests run against it.
+#   windows  LibVLC-windows-x86_64.artifactbundle.zip: the import library,
+#            libvlc.dll, libvlccore.dll and every plugin as DLLs SwiftPM
+#            copies next to the product, and the headers
+#            (scripts/fetch_vlc_windows.py, from VideoLAN's SDK). The package
+#            doesn't build on Windows yet, so a C program plays a file
+#            through it, laid out as SwiftPM would lay it out.
+#   android  LibVLC-android-<arm64-v8a|x86_64>.artifactbundle.zip: libvlc.so
+#            with every plugin built in, and the headers made for it
+#            (scripts/fetch_vlc_android.py, from VideoLAN's libvlc-all AAR).
+#            The package doesn't build for Android yet, so the same C program
+#            is compiled and linked against each ABI's library (no device
+#            runs it here).
+#
+# Linux has none: VideoLAN ships no libvlc for Linux, and the distributions'
+# own (libvlc-dev) is the one to link there.
+#
+# Every archive is VideoLAN's own build, repackaged; nothing is built from
+# VLC's source. They are this run's artifacts ("vlc-*"). Run it by hand to
+# check that they still come together; release.yml runs it for each release
+# and attaches the archives to it.
+#
+# A platform whose fetch script is unchanged since the last release (the
+# script pins the VideoLAN release and its checksum, and decides the
+# packaging) isn't made again: its archives are that release's, byte for byte
+# (scripts/reuse_release_libraries.py), so their checksums in Package.swift
+# stay the same, and only its checks run. Each release records the
+# fingerprints in its deps.json for the next. `rebuild` makes everything
+# regardless. Bump DEPS_REVISION after changing how a job below makes its
+# archives, which the fingerprints can't see.
+
+name: build-deps
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to make (all, or one to retry)
+        type: choice
+        options: [all, apple, windows, android]
+        default: all
+      rebuild:
+        description: Make every archive again, even if unchanged since the last release
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      rebuild:
+        description: Make every archive again, even if unchanged since the last release
+        type: boolean
+        default: false
+
+env:
+  SWIFT_VERSION: 6.3.3
+  # NucleantUI from GitHub; there is no sibling checkout here anyway.
+  NUCLEANT_LOCAL_DEV: "0"
+  # Package.swift takes LibVLC from Artifacts/, where the tests put it.
+  NUCLEANT_VLC_ARTIFACTS: "1"
+  # Part of every platform's fingerprint: bump it to make them all again
+  # after changing how a job here makes its archives.
+  DEPS_REVISION: "1"
+  # As NucleantVulkan's Android build.
+  ANDROID_NDK_VERSION: r28c
+
+jobs:
+  apple:
+    if: inputs.platform == '' || inputs.platform == 'all' || inputs.platform == 'apple'
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+      - name: Archives from the last release, if unchanged
+        id: reuse
+        if: ${{ !inputs.rebuild }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: uv run scripts/reuse_release_libraries.py fetch apple --output dist
+      - name: LibVLC.xcframework
+        if: steps.reuse.outputs.reused != 'true'
+        run: uv run scripts/fetch_vlc.py
+      - name: Package
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          mkdir -p dist
+          ditto -c -k --keepParent Dependencies/LibVLC.xcframework dist/LibVLC.xcframework.zip
+          ls -l dist
+      - name: Fingerprint
+        run: uv run scripts/reuse_release_libraries.py record apple --output dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vlc-apple
+          path: |
+            dist/*.zip
+            dist/fingerprint-*.txt
+      - name: Install Swift ${{ env.SWIFT_VERSION }}
+        run: |
+          release="swift-${SWIFT_VERSION}-RELEASE"
+          curl -fsSLO "https://download.swift.org/swift-${SWIFT_VERSION}-release/xcode/${release}/${release}-osx.pkg"
+          installer -pkg "${release}-osx.pkg" -target CurrentUserHomeDirectory
+          echo "$HOME/Library/Developer/Toolchains/${release}.xctoolchain/usr/bin" >> "$GITHUB_PATH"
+      # The archive itself, as a consumer gets it, not the framework it was
+      # made from: Dependencies/ goes, so nothing can build from it. The
+      # tests one at a time: each decodes video on the CPU, and all at once
+      # on a small machine some time out waiting for frames.
+      - name: Test against it
+        run: |
+          rm -rf Dependencies
+          mkdir -p Artifacts && cp dist/LibVLC.xcframework.zip Artifacts/
+          swift build
+          swift test --no-parallel
+
+  windows:
+    name: windows (x86_64)
+    # Repackaging only, which needs nothing of Windows: bsdtar unpacks
+    # VideoLAN's 7-Zip archive.
+    if: inputs.platform == '' || inputs.platform == 'all' || inputs.platform == 'windows'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+      - name: Archives from the last release, if unchanged
+        id: reuse
+        if: ${{ !inputs.rebuild }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: uv run scripts/reuse_release_libraries.py fetch windows-x86_64 --output dist
+      - name: bsdtar
+        if: steps.reuse.outputs.reused != 'true'
+        run: sudo apt-get update && sudo apt-get install -y libarchive-tools
+      - name: LibVLC-windows-x86_64.artifactbundle
+        if: steps.reuse.outputs.reused != 'true'
+        run: uv run scripts/fetch_vlc_windows.py --output dist
+      - name: Fingerprint
+        run: uv run scripts/reuse_release_libraries.py record windows-x86_64 --output dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vlc-windows-x86_64
+          path: |
+            dist/*.zip
+            dist/fingerprint-*.txt
+
+  windows-test:
+    name: windows test (x86_64)
+    needs: windows
+    # A fresh Windows machine: the bundle alone has to play a file. Laid out
+    # as SwiftPM lays out a product that depends on it: every DLL the bundle
+    # lists copied flat next to the executable, linked with the import
+    # library. libvlc finds the plugins there through VLC_PLUGIN_PATH.
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: vlc-windows-x86_64
+          path: dist
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Lay it out as SwiftPM does
+        run: |
+          python - <<'EOF'
+          import json, pathlib, shutil, zipfile
+
+          zipfile.ZipFile("dist/LibVLC-windows-x86_64.artifactbundle.zip").extractall("bundle")
+          bundle = pathlib.Path("bundle/LibVLC-windows-x86_64.artifactbundle")
+          product = pathlib.Path("product")
+          product.mkdir()
+          kinds = {}
+          for name, artifact in json.loads((bundle / "info.json").read_text())["artifacts"].items():
+              kinds[artifact["type"]] = kinds.get(artifact["type"], 0) + 1
+              if artifact["type"] == "experimentalWindowsDLL":
+                  source = bundle / artifact["variants"][0]["path"]
+                  assert not (product / source.name).exists(), f"two DLLs named {source.name}"
+                  shutil.copy2(source, product / source.name)
+          print(kinds)
+          EOF
+      - name: Play a file through it
+        run: |
+          bundle=bundle/LibVLC-windows-x86_64.artifactbundle
+          "/c/Program Files/LLVM/bin/clang.exe" -Wall -I "$bundle/include" scripts/libvlc_smoke.c \
+            "$bundle/lib/libvlc.lib" -o product/libvlc_smoke.exe
+          export VLC_PLUGIN_PATH="$(cygpath -w "$PWD/product")"
+          product/libvlc_smoke.exe "$(cygpath -w "$PWD/Tests/NucleantVLCTests/Resources/padded.mp4")"
+
+  android:
+    # Both ABIs on one machine.
+    if: inputs.platform == '' || inputs.platform == 'all' || inputs.platform == 'android'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+      - name: Archives from the last release, if unchanged
+        id: reuse
+        if: ${{ !inputs.rebuild }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: uv run scripts/reuse_release_libraries.py fetch android --output dist
+      - name: LibVLC-android artifact bundles
+        if: steps.reuse.outputs.reused != 'true'
+        run: uv run scripts/fetch_vlc_android.py --output dist
+      - name: Fingerprint
+        run: uv run scripts/reuse_release_libraries.py record android --output dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vlc-android
+          path: |
+            dist/*.zip
+            dist/fingerprint-*.txt
+      - uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: ${{ env.ANDROID_NDK_VERSION }}
+          add-to-path: false
+      # Compiled against each bundle's headers and linked against its
+      # library: everything the program calls is declared as the library
+      # exports it.
+      - name: Link a program against them
+        run: |
+          clang="${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+          for pair in arm64-v8a:aarch64-linux-android28 x86_64:x86_64-linux-android28; do
+            abi=${pair%%:*}
+            bundle="bundle-$abi/LibVLC-android-$abi.artifactbundle"
+            unzip -q "dist/LibVLC-android-$abi.artifactbundle.zip" -d "bundle-$abi"
+            "$clang" --target=${pair#*:} -Wall -I "$bundle/include" scripts/libvlc_smoke.c \
+              -L "$bundle/lib" -lvlc -o "libvlc_smoke-$abi"
+            file "libvlc_smoke-$abi"
+          done

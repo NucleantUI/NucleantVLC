@@ -39,6 +39,13 @@ swift build
 
 Add `NUCLEANT_LOCAL_DEV=1` to build against the sibling `../NucleantUI` checkout instead of its GitHub release.
 
+Once NucleantVLC has a release, `Package.swift` takes LibVLC from it (see [Releases](#releases)), and `fetch_vlc.py` is only for trying a change to it. Zip the framework it makes into `Artifacts/`, as the release does, and build with `NUCLEANT_VLC_ARTIFACTS=1`:
+
+```sh
+mkdir -p Artifacts && ditto -c -k --keepParent Dependencies/LibVLC.xcframework Artifacts/LibVLC.xcframework.zip
+NUCLEANT_VLC_ARTIFACTS=1 swift build
+```
+
 ### Xcode: iOS, and macOS as an app
 
 [Xcode/NucleantVLC.xcodeproj](Xcode/NucleantVLC.xcodeproj) has the demo as an app, `NucleantVLCDemoApp`, for iOS (device and simulator) and macOS (a proper `.app`, with `LibVLC.framework` and its plugins embedded). It compiles `Sources/NucleantVLCDemo` unchanged and depends on this package (`path: ..`), so run `fetch_vlc.py` first. Open it, pick the **NucleantVLCDemoApp** scheme and a destination (a simulator, a device or *My Mac*), and run. The first build stops on NucleantUI's macro plugin until you choose *Trust & Enable*.
@@ -95,6 +102,35 @@ Each platform gets its own `LibVLC.framework` inside `LibVLC.xcframework`:
 - **Module map.** Lets Swift `import LibVLC`.
 
 `Package.swift` takes the xcframework as a binary target, so it links without unsafe flags. At runtime on macOS, `VlcInstance` points `VLC_PLUGIN_PATH` and `VLC_DATA_PATH` into the framework before the first instance starts. iOS needs no such step, because the plugins are in the binary.
+
+The package builds for macOS and iOS only so far. The archives for Windows and Android are made and published already, ready for those platforms' files:
+
+**Windows** (`scripts/fetch_vlc_windows.py`). The one platform with a libvlc SDK: the `sdk/` folder in VideoLAN's 3.0.24 7-Zip archive (the `.zip` leaves it out), checked against VideoLAN's SHA-256. It is unpacked with `bsdtar`, because the archive's DLLs are BCJ2-compressed, which no Python 7-Zip reader can undo. The result is `LibVLC-windows-x86_64.artifactbundle.zip`, packaged the way NucleantVulkan packages its Windows libraries:
+
+- `libvlc.lib`, the import library the product links;
+- `libvlc.dll`, `libvlccore.dll` and 358 plugins (all but the Qt and skins interfaces), each a DLL SwiftPM copies flat next to the product, where libvlc finds the plugins through `VLC_PLUGIN_PATH`;
+- the SDK's headers.
+
+The Lua scripts (playlist parsers for web sites) are left out: a binary target can't ship a folder of them.
+
+**Android** (`scripts/fetch_vlc_android.py`). VideoLAN's `libvlc-all` 3.7.7 AAR from Maven Central. Each ABI's `libvlc.so` is libvlc with every plugin built in, and it exports libvlc's whole C API (the Java bindings' JNI code is a separate library, which is left out). It is libvlc 3.0.25: VLC's 3.0.x branch at the commit VideoLAN's libvlcjni pins, plus libvlcjni's patches. The AAR has no headers, so they are made the same way, from that VLC commit with the patches that change `include/vlc`, and pinned by SHA-256. They differ from macOS's:
+
+- `libvlc_media_player_set_time` and `_set_position` take a `b_fast` argument;
+- there are recording and attached-thumbnail APIs (`libvlc_picture.h`).
+
+The script fails unless every function the headers declare is one the library exports. Three VLM functions are the exception: no libvlc 3 build exports them, on any platform. The result is `LibVLC-android-<arm64-v8a|x86_64>.artifactbundle.zip`, the library and its headers. `libvlc.so` needs `libc++_shared.so`, the NDK one every Swift Android app ships already.
+
+**Linux.** VideoLAN ships no libvlc for Linux. The distribution's own is the one to link there (`libvlc-dev`; 3.0.20 on Ubuntu 24.04), so there is no archive for it.
+
+### Releases
+
+[.github/workflows/release.yml](.github/workflows/release.yml) (run by hand on `main`, with the version) works like NucleantVulkan's:
+
+1. [build-deps.yml](.github/workflows/build-deps.yml) makes every platform's archives and checks them. On macOS the package builds and its tests run against the zipped xcframework. On Windows a C program ([scripts/libvlc_smoke.c](scripts/libvlc_smoke.c)) plays a file through the bundle, laid out as SwiftPM lays out a product. For Android the same program is compiled and linked for each ABI.
+2. The release commit writes each archive's URL and checksum into `Package.swift` (`releasedVLC`), tags it, publishes the release with the archives, and pushes the commit to `main`.
+3. A new package that depends on the release by its version builds and runs on macOS.
+
+Each release also publishes `deps.json`, a fingerprint per platform of the fetch script that made its archives. The next release takes a platform's archives straight from the last release when its script is unchanged ([scripts/reuse_release_libraries.py](scripts/reuse_release_libraries.py)). They are the same bytes, so their checksums don't change either. Pass `rebuild` to make them all again. The Windows and Android scripts also write their archives with fixed timestamps and in a fixed order, so making them again gives the same bytes.
 
 ## The demo
 
