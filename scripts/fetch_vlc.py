@@ -190,9 +190,17 @@ def run(*args: str) -> str:
 
 
 def dependencies(dylib: Path) -> list[str]:
-    """What `dylib` links, its own install name first."""
-    lines = run("otool", "-L", str(dylib)).splitlines()[1:]
-    return [line.strip().split(" (")[0] for line in lines]
+    """What `dylib` links, its own install name first, over every
+    architecture in it. otool lists each architecture of a universal file
+    under its own "<file> (architecture …):" line (on an arm64 Mac even
+    without -arch all), and only the indented lines are libraries."""
+    names: list[str] = []
+    for line in run("otool", "-L", "-arch", "all", str(dylib)).splitlines():
+        if line.startswith("\t"):
+            name = line.strip().split(" (")[0]
+            if name not in names:
+                names.append(name)
+    return names
 
 
 def relink(dylib: Path, new_id: str | None, core: str) -> None:
@@ -251,6 +259,10 @@ def stage_macos(macos: Path, stage: Path) -> Path:
         sign(target)
         taken += 1
     sign(core)
+    # The app's own interface is a plugin or two; many more means the
+    # dependencies were misread, and libvlc would have nothing to run.
+    if len(left) > 5:
+        sys.exit(f"error: {len(left)} plugins left out ({', '.join(left[:5])}, …): check dependencies()")
 
     shutil.copytree(macos / "share" / "lua", version / "share" / "lua")
 
