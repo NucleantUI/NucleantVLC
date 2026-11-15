@@ -39,22 +39,23 @@ swift build
 
 Add `NUCLEANT_LOCAL_DEV=1` to build against the sibling `../NucleantUI` checkout instead of its GitHub release.
 
-### iOS
+### Xcode: iOS, and macOS as an app
 
-[Xcode/NucleantVLC.xcodeproj](Xcode/NucleantVLC.xcodeproj) has the demo as an iOS app, `NucleantVLCDemoApp`. It compiles `Sources/NucleantVLCDemo` unchanged and depends on this package (`path: ..`), so run `fetch_vlc.py` first. Open it, pick the **NucleantVLCDemoApp** scheme and a simulator or device, and run. The first build stops on NucleantUI's macro plugin until you choose *Trust & Enable*.
+[Xcode/NucleantVLC.xcodeproj](Xcode/NucleantVLC.xcodeproj) has the demo as an app, `NucleantVLCDemoApp`, for iOS (device and simulator) and macOS (a proper `.app`, with `LibVLC.framework` and its plugins embedded). It compiles `Sources/NucleantVLCDemo` unchanged and depends on this package (`path: ..`), so run `fetch_vlc.py` first. Open it, pick the **NucleantVLCDemoApp** scheme and a destination (a simulator, a device or *My Mac*), and run. The first build stops on NucleantUI's macro plugin until you choose *Trust & Enable*.
 
 From the command line, where `-skipMacroValidation` stands in for that prompt:
 
 ```sh
 cd Xcode
 xcodebuild -scheme NucleantVLCDemoApp -destination 'platform=iOS Simulator,name=iPhone 17' -skipMacroValidation build
+xcodebuild -scheme NucleantVLCDemoApp -destination 'platform=macOS' -skipMacroValidation build
 cd ..
 xcodebuild test -scheme NucleantVLC-Package -destination 'platform=iOS Simulator,name=iPhone 17' -skipMacroValidation
 ```
 
-The second command runs the package's tests in the simulator.
+The last command runs the package's tests in the simulator.
 
-- **Signing.** The simulator needs nothing. A device needs a team: set it under *Signing & Capabilities*, or as `DEVELOPMENT_TEAM` in `project.yml`.
+- **Signing.** The simulator and macOS need nothing. A device needs a team: set it under *Signing & Capabilities*, or as `DEVELOPMENT_TEAM` in `project.yml`.
 - **Changing the project.** [Xcode/project.yml](Xcode/project.yml) is the source. Regenerate the checked-in project with [xcodegen](https://github.com/yonaskolb/XcodeGen): `cd Xcode && xcodegen`.
 
 **Known problems in the iOS 26 Simulator (2026-11-15).** The app doesn't draw there yet, for two reasons, one after the other:

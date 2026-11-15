@@ -1,14 +1,16 @@
-# The NucleantVLC player demo as an iOS app, for the device and the
-# simulator — the same sources the package's `NucleantVLCDemo` executable
-# builds (`../Sources/NucleantVLCDemo`), unchanged. Regenerate the
-# .xcodeproj after editing this:
+# The NucleantVLC player demo as an app for iOS (device and simulator) and
+# macOS (a proper .app), picked by destination — the same sources the
+# package's `NucleantVLCDemo` executable builds (`../Sources/NucleantVLCDemo`),
+# unchanged. Regenerate the .xcodeproj after editing this:
 #
 #     cd Xcode && xcodegen
 name: NucleantVLC
 options:
   bundleIdPrefix: org.nucleantui
+  # NucleantVLC's Package.swift is the source of truth for both minimums.
   deploymentTarget:
     iOS: "17.0"
+    macOS: "14.0"
   xcodeVersion: "26.0"
   # Xcode would otherwise add a scheme per package target as well, the
   # package's `NucleantVLCDemo` executable among them.
@@ -39,7 +41,8 @@ settings:
 targets:
   NucleantVLCDemoApp:
     type: application
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, macOS]
     sources:
       - path: ../Sources/NucleantVLCDemo
     dependencies:
@@ -48,13 +51,16 @@ targets:
       base:
         PRODUCT_NAME: NucleantVLCDemo
         PRODUCT_BUNDLE_IDENTIFIER: org.nucleantui.NucleantVLCDemo
-        # Signs to run locally: all the simulator needs. A real device needs
-        # a team — Signing & Capabilities in Xcode, or DEVELOPMENT_TEAM here.
+        # Signs to run locally: all the simulator and macOS need. A real
+        # device needs a team — Signing & Capabilities in Xcode, or
+        # DEVELOPMENT_TEAM here. On the target, because xcodegen's
+        # application preset puts `CODE_SIGN_IDENTITY = "iPhone Developer"`
+        # there, above any project-level value.
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
         CODE_SIGN_IDENTITY: "-"
         "CODE_SIGN_IDENTITY[sdk=iphoneos*]": "Apple Development"
-        SUPPORTED_PLATFORMS: iphoneos iphonesimulator
+        SUPPORTED_PLATFORMS: iphoneos iphonesimulator macosx
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: "NO"
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "NO"
@@ -64,11 +70,12 @@ targets:
         LD_RUNPATH_SEARCH_PATHS:
           - $(inherited)
           - "@executable_path/Frameworks"
+          - "@executable_path/../Frameworks"
     info:
       path: Support/Info.plist
       properties:
         CFBundleDisplayName: NucleantVLC
-        # A scene manifest with no delegate class named: NucleantUI's
+        # iOS. A scene manifest with no delegate class named: NucleantUI's
         # `_AppLaunchDelegate` answers with its own scene delegate, so the
         # demo's `@main` stays plain `NucleantApp`.
         UIApplicationSceneManifest:
@@ -87,6 +94,9 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+        # macOS.
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSHighResolutionCapable: true
     scheme:
       testTargets: []
       gatherCoverageData: false
