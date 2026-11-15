@@ -17,8 +17,12 @@
 #            is compiled and linked against each ABI's library (no device
 #            runs it here).
 #
-# Linux has none: VideoLAN ships no libvlc for Linux, and the distributions'
-# own (libvlc-dev) is the one to link there.
+#   linux    LibVLC-linux-<x86_64|aarch64>.artifactbundle.zip: Ubuntu 24.04's
+#            libvlc, its plugins and every library they need but the C/C++
+#            runtime and the GPU driver, with headers and module map
+#            (scripts/fetch_vlc_linux.py, in an Ubuntu container). A package
+#            that depends on it builds and starts libvlc in a fresh Swift
+#            image.
 #
 # Every archive is VideoLAN's own build, repackaged; nothing is built from
 # VLC's source. They are this run's artifacts ("vlc-*"). Run it by hand to
@@ -42,7 +46,7 @@ on:
       platform:
         description: Platform to make (all, or one to retry)
         type: choice
-        options: [all, apple, windows, android]
+        options: [all, apple, linux, windows, android]
         default: all
       rebuild:
         description: Make every archive again, even if unchanged since the last release
@@ -114,6 +118,101 @@ jobs:
           mkdir -p Artifacts && cp dist/LibVLC.xcframework.zip Artifacts/
           swift build
           swift test --no-parallel
+
+  linux:
+    name: linux (${{ matrix.arch }})
+    # A machine per architecture, in a throwaway Ubuntu 24.04 container: the
+    # script installs Ubuntu's packages there.
+    if: inputs.platform == '' || inputs.platform == 'all' || inputs.platform == 'linux'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x86_64, runner: ubuntu-24.04 }
+          - { arch: aarch64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    container: ubuntu:24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      # For the HTTPS downloads (the last release's archives); the packages
+      # themselves come from the pinned snapshot.
+      - run: apt-get update -q && apt-get install -y -q ca-certificates
+      - uses: astral-sh/setup-uv@v10.3.0
+      - name: Archives from the last release, if unchanged
+        id: reuse
+        if: ${{ !inputs.rebuild }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: uv run scripts/reuse_release_libraries.py fetch linux-${{ matrix.arch }} --output dist
+      - name: LibVLC-linux-${{ matrix.arch }}.artifactbundle
+        if: steps.reuse.outputs.reused != 'true'
+        run: uv run scripts/fetch_vlc_linux.py --output dist
+      - name: Fingerprint
+        run: uv run scripts/reuse_release_libraries.py record linux-${{ matrix.arch }} --output dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vlc-linux-${{ matrix.arch }}
+          path: |
+            dist/*.zip
+            dist/fingerprint-*.txt
+
+  linux-test:
+    name: linux test (${{ matrix.arch }})
+    needs: linux
+    # A fresh Swift image with no libvlc: a package that depends on the bundle
+    # imports LibVLC from it, and SwiftPM copies every library next to the
+    # product. libvlc has to start and load its plugins from there.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x86_64, runner: ubuntu-24.04 }
+          - { arch: aarch64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    container: swift:6.3.3-noble
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: vlc-linux-${{ matrix.arch }}
+          path: dist
+      - name: Build and run a package that depends on it
+        run: |
+          mkdir -p consumer/Sources/Consumer && cp dist/LibVLC-linux-${{ matrix.arch }}.artifactbundle.zip consumer/
+          cd consumer
+          cat > Package.swift <<'EOF'
+          // swift-tools-version: 6.2
+          import PackageDescription
+
+          let package = Package(
+              name: "Consumer",
+              targets: [
+                  .binaryTarget(name: "LibVLC", path: "LibVLC-linux-${{ matrix.arch }}.artifactbundle.zip"),
+                  .executableTarget(name: "Consumer", dependencies: ["LibVLC"]),
+              ]
+          )
+          EOF
+          cat > Sources/Consumer/main.swift <<'EOF'
+          import Foundation
+          import LibVLC
+
+          // The plugins sit next to the executable, as every other library.
+          let directory = URL(fileURLWithPath: CommandLine.arguments[0]).resolvingSymlinksInPath().deletingLastPathComponent()
+          setenv("VLC_PLUGIN_PATH", directory.path, 1)
+          guard let vlc = libvlc_new(0, nil) else { fatalError("libvlc_new failed") }
+          var count = 0
+          var module = libvlc_audio_filter_list_get(vlc)
+          let list = module
+          while let current = module { count += 1; module = current.pointee.p_next }
+          libvlc_module_description_list_release(list)
+          print("libvlc \(String(cString: libvlc_get_version())), \(count) audio filters loaded")
+          precondition(count > 0, "no plugins loaded")
+          libvlc_release(vlc)
+          EOF
+          swift build
+          ls "$(swift build --show-bin-path)" | grep -c '\.so$'
+          swift run Consumer
 
   windows:
     name: windows (x86_64)

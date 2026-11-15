@@ -95,6 +95,7 @@ jobs:
           ls -l dist
           for archive in \
             LibVLC.xcframework.zip \
+            LibVLC-linux-x86_64.artifactbundle.zip LibVLC-linux-aarch64.artifactbundle.zip \
             LibVLC-windows-x86_64.artifactbundle.zip \
             LibVLC-android-arm64-v8a.artifactbundle.zip LibVLC-android-x86_64.artifactbundle.zip
           do
