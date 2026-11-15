@@ -10,6 +10,7 @@
 import Foundation
 import NucleantUI
 import NucleantVLC
+import Observation
 
 /// One entry of the playlist.
 struct PlaylistItem: Identifiable, Hashable {

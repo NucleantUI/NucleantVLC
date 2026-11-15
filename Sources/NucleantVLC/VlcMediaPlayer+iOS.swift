@@ -17,5 +17,15 @@ extension VlcMediaPlayer {
     public func setDeinterlace(_ mode: VlcDeinterlaceMode?) {
         libvlc_video_set_deinterlace(handle, mode == nil ? 0 : 1, mode?.rawValue)
     }
+
+    /// Seek to `milliseconds` in.
+    func seek(milliseconds: libvlc_time_t) {
+        libvlc_media_player_set_time(handle, milliseconds)
+    }
+
+    /// Seek to `position` (0…1) through the media.
+    func seek(position: Float) {
+        libvlc_media_player_set_position(handle, position)
+    }
 }
 #endif
