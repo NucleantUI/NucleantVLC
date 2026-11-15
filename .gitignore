@@ -69,3 +69,6 @@ Dependencies/
 
 # Not tracked in any Nucleant package: each consumer resolves its own graph.
 Package.resolved
+
+# Finder.
+.DS_Store
