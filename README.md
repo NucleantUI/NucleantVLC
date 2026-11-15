@@ -27,7 +27,7 @@ struct Movie {
 }
 ```
 
-**macOS only for now** (x86-64 and arm64). `LibVLC.xcframework` already has libvlc for iOS (arm64) and the iOS Simulator (arm64 and x86-64) as well.
+**macOS** (x86-64 and arm64) and **iOS** (arm64, and the iOS Simulator on arm64 and x86-64). iOS has the same frame path, decoded into IOSurfaces and copied into the view's texture, and is built from Xcode (below).
 
 ## Build and run
 
@@ -38,6 +38,31 @@ swift build
 ```
 
 Add `NUCLEANT_LOCAL_DEV=1` to build against the sibling `../NucleantUI` checkout instead of its GitHub release.
+
+### iOS
+
+[Xcode/NucleantVLC.xcodeproj](Xcode/NucleantVLC.xcodeproj) has the demo as an iOS app, `NucleantVLCDemoApp`. It compiles `Sources/NucleantVLCDemo` unchanged and depends on this package (`path: ..`), so run `fetch_vlc.py` first. Open it, pick the **NucleantVLCDemoApp** scheme and a simulator or device, and run. The first build stops on NucleantUI's macro plugin until you choose *Trust & Enable*.
+
+From the command line, where `-skipMacroValidation` stands in for that prompt:
+
+```sh
+cd Xcode
+xcodebuild -scheme NucleantVLCDemoApp -destination 'platform=iOS Simulator,name=iPhone 17' -skipMacroValidation build
+cd ..
+xcodebuild test -scheme NucleantVLC-Package -destination 'platform=iOS Simulator,name=iPhone 17' -skipMacroValidation
+```
+
+The second command runs the package's tests in the simulator.
+
+- **Signing.** The simulator needs nothing. A device needs a team: set it under *Signing & Capabilities*, or as `DEVELOPMENT_TEAM` in `project.yml`.
+- **Changing the project.** [Xcode/project.yml](Xcode/project.yml) is the source. Regenerate the checked-in project with [xcodegen](https://github.com/yonaskolb/XcodeGen): `cd Xcode && xcodegen`.
+
+**Known problem (2026-11-15): the app does not start in the iOS 26 Simulator.** NucleantVulkan ships MoltenVK 1.2.11. Its `vkCreateInstance` asks the simulator's Metal device for the texture buffer alignment of a pixel format the simulator doesn't have, and the simulator aborts on an assertion (`-[MTLSimDevice minimumTextureBufferAlignmentForPixelFormat:]: MTLPixelFormatInvalid is not supported on this device`). It is a hard assertion, not Metal API or shader validation, so turning those off doesn't help. This happens while the engine starts, before any NucleantVLC code runs, and NucleantUI's own examples hit it too. MoltenVK 1.3.0 disables the formats the simulator lacks. Until NucleantVulkan ships 1.3.0 or newer, the simulator runs only what doesn't need the engine:
+
+- libvlc itself, which the package tests cover;
+- the frame path up to the IOSurface (`VlcFramePoolTests+iOS`).
+
+On this Intel Mac the player and frame-pool tests pass one at a time. When they all run at once, several time out waiting for frames, because every test decodes on the CPU at the same time. A real device is untested.
 
 ### Where libvlc comes from
 
@@ -100,7 +125,7 @@ All are H.264, which VideoToolbox decodes on the GPU.
 
 libvlc can't render into a Vulkan image. libvlc 3 has two outputs: memory (frames into buffers the app hands it) or a native window. libvlc 4's GPU outputs are OpenGL, GLES2, D3D11, D3D9 and Android windows, with no Vulkan. So the frames come through memory, and from there it is GPU all the way:
 
-1. **Decode.** libvlc's memory output (`libvlc_video_set_callbacks`) decodes, through VideoToolbox where the codec allows, into IOSurface-backed BGRA buffers from a small pool (`VlcFramePool`, macOS file). The pool is shared between libvlc's video thread and the main thread under one lock, and neither side ever waits for the other: a frame shown before the last one was taken is skipped.
+1. **Decode.** libvlc's memory output (`libvlc_video_set_callbacks`) decodes, through VideoToolbox where the codec allows, into IOSurface-backed BGRA buffers from a small pool (`VlcFramePool`, one file per platform). The pool is shared between libvlc's video thread and the main thread under one lock, and neither side ever waits for the other: a frame shown before the last one was taken is skipped.
 2. **Fit.** libvlc's memory output is opened once, at a fixed size. So on the main thread the newest frame is scaled by VideoToolbox (`VTPixelTransferSession`, letterboxed) to the view texture's `pixelWidth × pixelHeight`. The video's shape is kept and the rest is black. The shape comes from the media's track: the picture's own size and its sample aspect ratio, or `VlcVideoOutput.aspectRatio` when set. Decoders pad their frames (whole codec blocks, aligned rows, so 1080 lines decode as 1088), and libvlc stretches the picture over the padded size. Fitting at the picture's real shape undoes that stretch.
 3. **Show.** The fitted buffer's IOSurface is copied into the view's texture with `ViewTexture.write(ioSurface:)`, the `TextureView` / `ExternalTextureNode` path NucleantCEF uses too. Resizing the view refits the frame it already has, so a paused video follows its view too.
 
@@ -109,10 +134,10 @@ libvlc can't render into a Vulkan image. libvlc 3 has two outputs: memory (frame
 | File | What |
 |---|---|
 | `VlcEnums.swift` | libvlc's C enums as Swift enums (raw value = the C constant, named beside it), bit masks as option sets |
-| `VlcInstance.swift` (+ `+MacOS`) | `libvlc_instance_t`: arguments, version, user agent, log handler; where the plugins are |
+| `VlcInstance.swift` (+ `+MacOS`, `+iOS`) | `libvlc_instance_t`: arguments, version, user agent, log handler; where the plugins are |
 | `VlcMedia.swift` | `libvlc_media_t`: locations, options, metadata, async parsing, tracks, sub-items, slaves |
-| `VlcMediaPlayer.swift` | `libvlc_media_player_t`: transport, time, titles and chapters, tracks, audio, picture adjustments, marquee, logo, snapshots |
+| `VlcMediaPlayer.swift` (+ `+MacOS`, `+iOS`) | `libvlc_media_player_t`: transport, time, titles and chapters, tracks, audio, picture adjustments, marquee, logo, snapshots; the platform files hold the calls whose C signature differs (deinterlace) |
 | `VlcPlayerEvents.swift` | the player's events as a protocol with no-op defaults, delivered on the main actor in libvlc's order |
 | `VlcRemote.swift` | the model protocol: owns a player, hears its events, remote-control commands; the `TextureSource` side of `VlcView` |
 | `VlcView.swift` | the view |
-| `VlcVideoOutput.swift` (+ `VlcFramePool+MacOS`) | frames into the views' textures |
+| `VlcVideoOutput.swift` (+ `VlcFramePool+MacOS`, `VlcFramePool+iOS`) | frames into the views' textures |

@@ -354,11 +354,6 @@ public final class VlcMediaPlayer {
 
     // MARK: - Picture
 
-    /// Deinterlace with `mode`, or not at all with `nil`.
-    public func setDeinterlace(_ mode: VlcDeinterlaceMode?) {
-        libvlc_video_set_deinterlace(handle, mode?.rawValue)
-    }
-
     /// The color adjustments are applied while this is on.
     public var isAdjustEnabled: Bool {
         get { libvlc_video_get_adjust_int(handle, UInt32(VlcAdjustOption.enable.rawValue)) != 0 }

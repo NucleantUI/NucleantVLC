@@ -28,7 +28,8 @@ func getDependencies() -> [Package.Dependency] {
 let package = Package(
     name: "NucleantVLC",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v14),
+        .iOS(.v17),
     ],
     products: [
         .library(name: "NucleantVLC", targets: ["NucleantVLC"]),

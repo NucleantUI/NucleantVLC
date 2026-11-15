@@ -1,0 +1,92 @@
+# The NucleantVLC player demo as an iOS app, for the device and the
+# simulator — the same sources the package's `NucleantVLCDemo` executable
+# builds (`../Sources/NucleantVLCDemo`), unchanged. Regenerate the
+# .xcodeproj after editing this:
+#
+#     cd Xcode && xcodegen
+name: NucleantVLC
+options:
+  bundleIdPrefix: org.nucleantui
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "26.0"
+  # Xcode would otherwise add a scheme per package target as well, the
+  # package's `NucleantVLCDemo` executable among them.
+  postGenCommand: >-
+    mkdir -p NucleantVLC.xcodeproj/project.xcworkspace/xcshareddata &&
+    printf '%s\n'
+    '<?xml version="1.0" encoding="UTF-8"?>'
+    '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
+    '<plist version="1.0">'
+    '<dict>'
+    '	<key>IDEWorkspaceSharedSettings_AutocreateContextsIfNeeded</key>'
+    '	<false/>'
+    '</dict>'
+    '</plist>'
+    > NucleantVLC.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+
+packages:
+  # The enclosing package, LibVLC.xcframework with it
+  # (`uv run scripts/fetch_vlc.py` first).
+  NucleantVLC:
+    path: ..
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    ENABLE_USER_SCRIPT_SANDBOXING: "YES"
+
+targets:
+  NucleantVLCDemoApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: ../Sources/NucleantVLCDemo
+    dependencies:
+      - package: NucleantVLC
+    settings:
+      base:
+        PRODUCT_NAME: NucleantVLCDemo
+        PRODUCT_BUNDLE_IDENTIFIER: org.nucleantui.NucleantVLCDemo
+        # Signs to run locally: all the simulator needs. A real device needs
+        # a team — Signing & Capabilities in Xcode, or DEVELOPMENT_TEAM here.
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_IDENTITY: "-"
+        "CODE_SIGN_IDENTITY[sdk=iphoneos*]": "Apple Development"
+        SUPPORTED_PLATFORMS: iphoneos iphonesimulator
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: "NO"
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "NO"
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: "NO"
+        # LibVLC, MoltenVK and the other dynamic frameworks from the
+        # packages' binary targets; Xcode embeds them here.
+        LD_RUNPATH_SEARCH_PATHS:
+          - $(inherited)
+          - "@executable_path/Frameworks"
+    info:
+      path: Support/Info.plist
+      properties:
+        CFBundleDisplayName: NucleantVLC
+        # A scene manifest with no delegate class named: NucleantUI's
+        # `_AppLaunchDelegate` answers with its own scene delegate, so the
+        # demo's `@main` stays plain `NucleantApp`.
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UILaunchScreen: {}
+        UIApplicationSupportsIndirectInputEvents: true
+        UIStatusBarHidden: true
+        UIViewControllerBasedStatusBarAppearance: false
+        UIRequiresFullScreen: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    scheme:
+      testTargets: []
+      gatherCoverageData: false
