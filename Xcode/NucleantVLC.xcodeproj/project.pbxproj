@@ -1,0 +1,364 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2176563298B98A28838339BD /* Verifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 013E184779F9FA88CFE07FBE /* Verifier.swift */; };
+		3BE819855D23083DE94821AC /* NucleantVLC in Frameworks */ = {isa = PBXBuildFile; productRef = E547F51B49E8FF9E1EE193DE /* NucleantVLC */; };
+		4450407524C6FB78F06E5E56 /* Icons.swift in Sources */ = {isa = PBXBuildFile; fileRef = E185C2B01A3801CE42C80981 /* Icons.swift */; };
+		9AC8BEBEAA354E59139D7222 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6A7C4FCE432FB883CD1828 /* Player.swift */; };
+		B910BB226B731DB6373B96A2 /* PlayerViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2B2C17E6E71B86DD3D0A2 /* PlayerViews.swift */; };
+		EFF0AD9B798188D9107FF702 /* NucleantVLCDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6B432366F3D661784EF8BE /* NucleantVLCDemo.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		013E184779F9FA88CFE07FBE /* Verifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Verifier.swift; sourceTree = "<group>"; };
+		1D6B432366F3D661784EF8BE /* NucleantVLCDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NucleantVLCDemo.swift; sourceTree = "<group>"; };
+		3B21CFBC60C06217B32174A3 /* NucleantVLC */ = {isa = PBXFileReference; lastKnownFileType = folder; name = NucleantVLC; path = ..; sourceTree = SOURCE_ROOT; };
+		4E6A7C4FCE432FB883CD1828 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
+		A1B2B2C17E6E71B86DD3D0A2 /* PlayerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViews.swift; sourceTree = "<group>"; };
+		AC1D95BABF25E939BEF70AEC /* NucleantVLCDemoApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = NucleantVLCDemoApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E185C2B01A3801CE42C80981 /* Icons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icons.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		213CEF12E61E4A3329FDFD6F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3BE819855D23083DE94821AC /* NucleantVLC in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		101C55AD3966B0962C9C7B13 = {
+			isa = PBXGroup;
+			children = (
+				8F88F2E3906E3602C001C81F /* NucleantVLCDemo */,
+				326AF99953E72BE106FDC06A /* Packages */,
+				8B367E49156BAFABA1326551 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		326AF99953E72BE106FDC06A /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				3B21CFBC60C06217B32174A3 /* NucleantVLC */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		8B367E49156BAFABA1326551 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AC1D95BABF25E939BEF70AEC /* NucleantVLCDemoApp.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8F88F2E3906E3602C001C81F /* NucleantVLCDemo */ = {
+			isa = PBXGroup;
+			children = (
+				E185C2B01A3801CE42C80981 /* Icons.swift */,
+				1D6B432366F3D661784EF8BE /* NucleantVLCDemo.swift */,
+				4E6A7C4FCE432FB883CD1828 /* Player.swift */,
+				A1B2B2C17E6E71B86DD3D0A2 /* PlayerViews.swift */,
+				013E184779F9FA88CFE07FBE /* Verifier.swift */,
+			);
+			name = NucleantVLCDemo;
+			path = ../Sources/NucleantVLCDemo;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		34AB40D3DE5A8AAA34096F66 /* NucleantVLCDemoApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9F934D1BF6065F3770ACB020 /* Build configuration list for PBXNativeTarget "NucleantVLCDemoApp" */;
+			buildPhases = (
+				7F3A8B0369C1307142ECD624 /* Sources */,
+				213CEF12E61E4A3329FDFD6F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NucleantVLCDemoApp;
+			packageProductDependencies = (
+				E547F51B49E8FF9E1EE193DE /* NucleantVLC */,
+			);
+			productName = NucleantVLCDemoApp;
+			productReference = AC1D95BABF25E939BEF70AEC /* NucleantVLCDemoApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A6225B52BFD7ACE7DF8C5FED /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					34AB40D3DE5A8AAA34096F66 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 0A19DAFAAEC3627A1A2ED733 /* Build configuration list for PBXProject "NucleantVLC" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 101C55AD3966B0962C9C7B13;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				0639A72AB1B645CA6DE1E7BD /* XCLocalSwiftPackageReference ".." */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 8B367E49156BAFABA1326551 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				34AB40D3DE5A8AAA34096F66 /* NucleantVLCDemoApp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7F3A8B0369C1307142ECD624 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4450407524C6FB78F06E5E56 /* Icons.swift in Sources */,
+				EFF0AD9B798188D9107FF702 /* NucleantVLCDemo.swift in Sources */,
+				9AC8BEBEAA354E59139D7222 /* Player.swift in Sources */,
+				B910BB226B731DB6373B96A2 /* PlayerViews.swift in Sources */,
+				2176563298B98A28838339BD /* Verifier.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0A44DCD9249AC3029923C10C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		9B39FCB2EC01389794A26970 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		CFA46BA98B379442385149F1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = Support/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.nucleantui.NucleantVLCDemo;
+				PRODUCT_NAME = NucleantVLCDemo;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		D0112A857AF69C7653A3D544 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = Support/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.nucleantui.NucleantVLCDemo;
+				PRODUCT_NAME = NucleantVLCDemo;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0A19DAFAAEC3627A1A2ED733 /* Build configuration list for PBXProject "NucleantVLC" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0A44DCD9249AC3029923C10C /* Debug */,
+				9B39FCB2EC01389794A26970 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9F934D1BF6065F3770ACB020 /* Build configuration list for PBXNativeTarget "NucleantVLCDemoApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0112A857AF69C7653A3D544 /* Debug */,
+				CFA46BA98B379442385149F1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		0639A72AB1B645CA6DE1E7BD /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E547F51B49E8FF9E1EE193DE /* NucleantVLC */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NucleantVLC;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A6225B52BFD7ACE7DF8C5FED /* Project object */;
+}
