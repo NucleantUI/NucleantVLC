@@ -1,0 +1,229 @@
+# Releases NucleantVLC, run by hand with the version to release:
+#
+#   1. check     the version is X.Y.Z, and the run is on main;
+#   2. deps      makes and checks every platform's libvlc archives
+#                (build-deps.yml) as artifacts, or, for a platform whose
+#                fetch script is unchanged since the last release, takes that
+#                release's archives and checks them;
+#   3. release   makes the release commit on top of main, the commit it ran
+#                on, with Package.swift's `releasedVLC` filled in (replacing
+#                the previous release's): each archive's URL on this release
+#                and its checksum (from `swift package compute-checksum`,
+#                which a url binary target must carry). LibVLC then becomes a
+#                binary target that SwiftPM downloads. Then it tags the commit
+#                with the version, publishes the GitHub release with the
+#                archives and deps.json (each platform's fingerprint, which
+#                the next release compares against), and pushes the commit to
+#                main, last, so main never names archives that aren't up yet.
+#                Main and the tag then build from the same archives. A version
+#                already released is released again: its release and tag are
+#                replaced, but only at this point, with everything made,
+#                checked and tested;
+#   4. verify    a new package that depends on the release by its version, and
+#                builds and runs against it on macOS: the URL, checksum and
+#                manifest as a consumer gets them.
+#
+# The Windows and Android archives are published with every release,
+# ready for when the package builds there. Package.swift doesn't link them
+# yet.
+#
+# The tag and main are pushed with GITHUB_TOKEN, so they start no workflow.
+
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, X.Y.Z (the tag)
+        type: string
+        required: true
+      rebuild:
+        description: Make every archive again, even if unchanged since the last release
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ inputs.version }}
+  SWIFT_VERSION: 6.3.3
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Version
+        run: |
+          semver='^[0-9]+\.[0-9]+\.[0-9]+$'
+          [[ "$TAG" =~ $semver ]] || { echo "::error::version $TAG is not X.Y.Z"; exit 1; }
+          # The release commit goes onto main.
+          [ "$GITHUB_REF" = refs/heads/main ] || { echo "::error::run it on main, not $GITHUB_REF"; exit 1; }
+          if git ls-remote --exit-code --tags "https://github.com/$GITHUB_REPOSITORY" "refs/tags/$TAG" >/dev/null; then
+            echo "::notice::$TAG is released already: it will be released again"
+          fi
+
+  deps:
+    needs: check
+    uses: ./.github/workflows/build-deps.yml
+    with:
+      rebuild: ${{ inputs.rebuild }}
+
+  release:
+    needs: deps
+    runs-on: ubuntu-24.04
+    # Swift's image, to evaluate the release commit's manifest before it is
+    # published.
+    container: swift:6.3.3-noble
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      NUCLEANT_LOCAL_DEV: "0"
+    steps:
+      - uses: actions/checkout@v7
+      - name: System packages
+        run: apt-get update && apt-get install -y gh python3
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: vlc-*
+          path: dist
+          merge-multiple: true
+      # Every archive a platform makes: the release carries them all.
+      - name: All the archives
+        run: |
+          ls -l dist
+          for archive in \
+            LibVLC.xcframework.zip \
+            LibVLC-windows-x86_64.artifactbundle.zip \
+            LibVLC-android-arm64-v8a.artifactbundle.zip LibVLC-android-x86_64.artifactbundle.zip
+          do
+            [ -f "dist/$archive" ] || { echo "::error::no $archive"; exit 1; }
+          done
+      # Each platform's fingerprint, from the job that made (or reused) its
+      # archives: the next release reuses the ones still matching.
+      - name: deps.json
+        run: |
+          python3 scripts/reuse_release_libraries.py collect dist > dist/deps.json
+          cat dist/deps.json
+      - name: Release commit
+        run: |
+          python3 - <<'EOF'
+          import os, pathlib, re, subprocess
+
+          def checksum(path):
+              return subprocess.run(["swift", "package", "compute-checksum", str(path)],
+                                    check=True, capture_output=True, text=True).stdout.strip()
+
+          base = f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/releases/download/{os.environ['TAG']}"
+          entries = "".join(
+              f'    "{path.name}": (\n'
+              f'        url: "{base}/{path.name}",\n'
+              f'        checksum: "{checksum(path)}"\n'
+              f'    ),\n'
+              for path in sorted(pathlib.Path("dist").glob("*.zip"))
+          )
+          manifest = pathlib.Path("Package.swift")
+          text = manifest.read_text()
+
+          # The previous release's entries, or none before the first.
+          declaration = re.compile(
+              r"let releasedVLC: \[String: \(url: String, checksum: String\)\] = (\[:\]|\[\n.*?\n\])\n",
+              re.DOTALL)
+          assert len(declaration.findall(text)) == 1, "Package.swift has no releasedVLC to fill in"
+          text = declaration.sub(
+              lambda _: "let releasedVLC: [String: (url: String, checksum: String)] = [\n" + entries + "]\n", text)
+
+          manifest.write_text(text)
+          EOF
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git diff Package.swift
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Package.swift
+          git commit -q -m "Release $TAG: libvlc from the release's archives"
+      # The manifest as a consumer evaluates it: it must evaluate, without
+      # unsafeFlags, with every dependency by version (as SwiftPM requires of
+      # a package depended on by version), and with LibVLC on this release.
+      - name: Release manifest
+        run: |
+          swift package dump-package > manifest.json
+          python3 - <<'EOF'
+          import json, os
+          base = f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/releases/download/{os.environ['TAG']}/"
+          manifest = json.load(open("manifest.json"))
+          assert "unsafeFlags" not in json.dumps(manifest["targets"]), "the release manifest has unsafeFlags"
+          for dependency in manifest["dependencies"]:
+              for kind, (spec, *_) in dependency.items():
+                  requirement = spec.get("requirement", {})
+                  assert kind == "sourceControl" and ("range" in requirement or "exact" in requirement), \
+                      f"{spec.get('identity')}: not depended on by version ({kind} {requirement})"
+          binaries = [t for t in manifest["targets"] if t["type"] == "binary"]
+          assert binaries, "no binary targets"
+          for target in binaries:
+              assert (target.get("url") or "").startswith(base) and target.get("checksum"), \
+                  f"binary target {target['name']} is not on the release: {target.get('url') or target.get('path')}"
+          print(", ".join(f"{t['name']} <- {t['url'].rsplit('/', 1)[1]}" for t in binaries))
+          EOF
+          rm manifest.json
+      - name: Tag and publish
+        run: |
+          # Main as the run found it: the release commit goes on top of it,
+          # so nothing is replaced or published if it moved meanwhile.
+          git fetch -q origin main
+          [ "$(git rev-parse origin/main)" = "$GITHUB_SHA" ] || {
+            echo "::error::main moved during the run: run the release again on the new main"; exit 1; }
+          # Releasing a version again replaces its release and tag.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release delete "$TAG" --yes --cleanup-tag
+          fi
+          git tag "$TAG"
+          git push --force origin "refs/tags/$TAG"
+          # A draft until every archive is up, so nobody resolves a release
+          # that is missing one.
+          gh release create "$TAG" dist/*.zip dist/deps.json --verify-tag --draft --title "$TAG" \
+            --notes "libvlc for every platform VideoLAN ships it for, repackaged from VideoLAN's own builds; SwiftPM downloads the one it builds for."
+          gh release edit "$TAG" --draft=false
+          # Main builds from this release from now on. Refused if main moved
+          # during the run: run the release again on the new main.
+          git push origin HEAD:refs/heads/main
+
+  verify:
+    needs: release
+    runs-on: macos-15
+    steps:
+      - name: Install Swift ${{ env.SWIFT_VERSION }}
+        run: |
+          release="swift-${SWIFT_VERSION}-RELEASE"
+          curl -fsSLO "https://download.swift.org/swift-${SWIFT_VERSION}-release/xcode/${release}/${release}-osx.pkg"
+          installer -pkg "${release}-osx.pkg" -target CurrentUserHomeDirectory
+          echo "$HOME/Library/Developer/Toolchains/${release}.xctoolchain/usr/bin" >> "$GITHUB_PATH"
+      - name: Build a package that depends on the release
+        run: |
+          mkdir -p consumer/Sources/Consumer && cd consumer
+          cat > Package.swift <<EOF
+          // swift-tools-version: 6.2
+          import PackageDescription
+
+          let package = Package(
+              name: "Consumer",
+              platforms: [.macOS(.v14)],
+              dependencies: [
+                  .package(url: "https://github.com/$GITHUB_REPOSITORY", exact: "$TAG"),
+              ],
+              targets: [
+                  .executableTarget(name: "Consumer", dependencies: [
+                      .product(name: "NucleantVLC", package: "NucleantVLC"),
+                  ]),
+              ]
+          )
+          EOF
+          cat > Sources/Consumer/main.swift <<'EOF'
+          import NucleantVLC
+
+          // An instance needs libvlc's plugins, found inside the framework.
+          _ = try VlcInstance()
+          print("NucleantVLC resolved and linked: libvlc \(VlcInstance.version)")
+          EOF
+          swift build
+          swift run Consumer
