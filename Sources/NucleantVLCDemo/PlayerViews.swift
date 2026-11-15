@@ -103,7 +103,7 @@ struct PlayerControls {
             }
             Spacer()
             HStack(spacing: 52) {
-                RoundButton(icon: .skipBack, iconSize: 26, diameter: 56, caption: "10") {
+                RoundButton(icon: .skipBack, iconSize: 30, diameter: 56) {
                     player.seek(by: .seconds(-10))
                     pressed()
                 }
@@ -112,7 +112,7 @@ struct PlayerControls {
                     pressed()
                 }
                 .keyboardShortcut(.space, modifiers: [])
-                RoundButton(icon: .skipForward, iconSize: 26, diameter: 56, caption: "10") {
+                RoundButton(icon: .skipForward, iconSize: 30, diameter: 56) {
                     player.seek(by: .seconds(10))
                     pressed()
                 }
@@ -415,7 +415,7 @@ struct PlaylistRow {
                     .font(.system(size: 12))
                     .foregroundColor(Color(white: 1, opacity: 0.6))
             }
-            IconView(icon: .close, style: Color(white: 1, opacity: 0.7), lineWidth: 1.5)
+            IconView(icon: .close, style: Color(white: 1, opacity: 0.7))
                 .frame(width: 12, height: 12)
                 .opacity(isHovered ? 1 : 0)
                 .onTapGesture(perform: remove)
