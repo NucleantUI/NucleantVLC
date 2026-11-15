@@ -157,6 +157,33 @@ struct VlcFramePoolTests {
         #expect(isBlack(pixel(square, 32, 58)), "bar below: \(pixel(square, 32, 58))")
     }
 
+    @Test func subtitlesAreDrawnIntoTheFrames() async throws {
+        let srt = FileManager.default.temporaryDirectory.appendingPathComponent("nucleantvlc-\(UUID().uuidString).srt")
+        try "1\n00:00:00,000 --> 00:00:30,000\nWWWWWWWWWW\n\n".write(to: srt, atomically: true, encoding: .utf8)
+        let media = try VlcMedia(url: try TestClip.red().write())
+        #expect(media.addSlave(.subtitle, url: srt))
+
+        let remote = RecordingRemote()
+        remote.open(media)
+        let key = ObjectIdentifier(remote)
+        let frames = remote.player.video.frames
+        // libvlc blends the text into the picture before the memory output
+        // gets it: white letters over the red, along the bottom.
+        let lettered = await waitUntil {
+            guard let surface = frames.frame(width: 320, height: 180, aspect: 16.0 / 9, for: key) else { return false }
+            var white = 0
+            for y in stride(from: 120, to: 180, by: 2) {
+                for x in stride(from: 0, to: 320, by: 2) {
+                    let p = pixel(surface, x, y)
+                    if p.r > 200, p.g > 200, p.b > 200 { white += 1 }
+                }
+            }
+            return white > 20
+        }
+        #expect(lettered, "subtitle text in the frames")
+        #expect(remote.player.subtitleTrack >= 0, "the subtitle file's track is selected")
+    }
+
     @Test func framesKeepComing() async throws {
         let clip = TestClip(frameCount: 50)
         let remote = try await playing(clip)

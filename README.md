@@ -34,7 +34,7 @@ struct Movie {
 ```sh
 uv run scripts/fetch_vlc.py      # libvlc 3.0.24 → Dependencies/LibVLC.xcframework (pinned + checksummed)
 swift build
-.build/debug/NucleantVLCDemo     # Big Buck Bunny 1080p/720p, or: NucleantVLCDemo <files, folders, URLs>
+.build/debug/NucleantVLCDemo     # Blender's open movies, or: NucleantVLCDemo <files, folders, URLs>
 ```
 
 Add `NUCLEANT_LOCAL_DEV=1` to build against the sibling `../NucleantUI` checkout instead of its GitHub release.
@@ -58,20 +58,28 @@ Nothing else from the app is kept. They're packaged as `LibVLC.framework` inside
 
 ## The demo
 
-`NucleantVLCDemo` is a media player:
+`NucleantVLCDemo` is a media player. The video fills the window and the controls float over it on glass:
 
-- **Video.** The `VlcView`, with the current title and buffering state under it.
-- **Transport.** A seek slider with time and length, play/pause (also space), stop, previous/next, speed.
-- **Tracks.** Audio and subtitle menus.
-- **Volume.** Mute and a volume slider.
-- **Playlist.**
-  - A field opens files, folders (their media files) and addresses.
-  - Double-click an entry to play it.
-  - Entries show the title and duration read without playing.
-  - Archives and playlist files open up into the entries they hold.
-  - Optional repeat.
+- **Top.** A playlist button, the title (with loading progress), and mute with a volume bar.
+- **Middle.** Skip back 10 s, play/pause (also space), skip forward 10 s.
+- **Bottom.** Speed, audio track and subtitle menus, then time played, the seek bar and time left.
 
-With nothing on the command line it queues Blender's Big Buck Bunny from `download.blender.org/peach/bigbuckbunny_movies`, in its 1080p and 720p H.264 versions. Those are the ones VideoToolbox decodes on the GPU. libvlc streams each movie out of its zip archive over HTTPS.
+While a video plays, the controls fade out a few seconds after the last press. A press on the video brings them back, and another hides them. They stay while paused or while the playlist is open.
+
+The playlist slides in from the side:
+
+- A field opens files, folders (their media files) and addresses.
+- Previous and next, and double-click an entry to play it.
+- Entries show the title and duration read without playing.
+- Playlist files open up into the entries they hold.
+- Optional repeat.
+
+With nothing on the command line it queues Blender's open movies, streamed over HTTPS from `download.blender.org` as plain files:
+
+- the Big Buck Bunny trailer, in 1080p and 720p;
+- Sintel in 1080p, whose ten subtitle tracks fill the subtitle menu.
+
+All are H.264, which VideoToolbox decodes on the GPU.
 
 `NUCLEANT_VLC_DEMO_VERIFY=<file.ppm>` runs a self-check in the real window:
 

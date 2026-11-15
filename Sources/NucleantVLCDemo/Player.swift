@@ -57,18 +57,16 @@ final class Player: VlcRemote {
     var isPlaying: Bool { state == .playing || state == .opening }
 
     /// What plays when the app is started with nothing to play: Blender's
-    /// Big Buck Bunny, in the versions the GPU decodes (H.264, through
-    /// VideoToolbox) at full size. Each is a zip archive holding the movie;
-    /// libvlc streams it out of the archive over HTTPS.
-    static let bigBuckBunny: [PlaylistItem] = [
-        ("1080p", "big_buck_bunny_1080p_h264.mov.zip"),
-        ("720p", "big_buck_bunny_720p_h264.mov.zip"),
-    ].map { size, file in
-        PlaylistItem(
-            url: URL(string: "https://download.blender.org/peach/bigbuckbunny_movies/" + file)!,
-            title: "Big Buck Bunny · \(size)",
-            keepsTitle: true
-        )
+    /// open movies as plain files, streamed over HTTPS, in versions the GPU
+    /// decodes (H.264, through VideoToolbox) at full size — the Big Buck
+    /// Bunny trailer, and Sintel, whose subtitle tracks fill the subtitle
+    /// menu.
+    static let blenderMovies: [PlaylistItem] = [
+        ("Big Buck Bunny · trailer 1080p", "peach/trailer/trailer_1080p.mov"),
+        ("Big Buck Bunny · trailer 720p", "peach/trailer/trailer_720p.mov"),
+        ("Sintel · 1080p", "demo/movies/Sintel.2010.1080p.mkv"),
+    ].map { title, path in
+        PlaylistItem(url: URL(string: "https://download.blender.org/" + path)!, title: title, keepsTitle: true)
     }
 
     // MARK: - Playlist
@@ -208,8 +206,8 @@ final class Player: VlcRemote {
         self.volume = Int((volume * 100).rounded())
     }
 
-    /// The end of a movie — or of an archive or playlist, which "plays" by
-    /// listing what it holds: then what it holds plays.
+    /// The end of a movie — or of a playlist file, which "plays" by listing
+    /// what it holds: then what it holds plays.
     func didReachEnd() {
         let entries = player.media?.subitems ?? []
         guard let first = entries.first else {
@@ -239,7 +237,7 @@ final class Player: VlcRemote {
     }
 
     /// Title and duration for the playlist, from a parse that plays nothing
-    /// — and an archive or playlist file opened up into what it holds.
+    /// — and a playlist file opened up into what it holds.
     private func describe(_ item: PlaylistItem) {
         guard let media = try? VlcMedia(url: item.url, instance: player.instance) else { return }
         Task {
