@@ -62,27 +62,27 @@ func getDependencies() -> [Package.Dependency] {
 /// release.
 let releasedVLC: [String: (url: String, checksum: String)] = [
     "LibVLC-android-arm64-v8a.artifactbundle.zip": (
-        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.1/LibVLC-android-arm64-v8a.artifactbundle.zip",
+        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.2/LibVLC-android-arm64-v8a.artifactbundle.zip",
         checksum: "86aedb0e906934b90828926d3288638b4f9e921f48b94dbee6d07736deda1e10"
     ),
     "LibVLC-android-x86_64.artifactbundle.zip": (
-        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.1/LibVLC-android-x86_64.artifactbundle.zip",
+        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.2/LibVLC-android-x86_64.artifactbundle.zip",
         checksum: "cb527069fc69e56fa220670c9daa9e164dd9fa83df6c9e5cf14094869dbe336c"
     ),
     "LibVLC-linux-aarch64.artifactbundle.zip": (
-        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.1/LibVLC-linux-aarch64.artifactbundle.zip",
+        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.2/LibVLC-linux-aarch64.artifactbundle.zip",
         checksum: "a4632a1baa1807227a0843c71b62b9fab2c3f018ec12c83208bdcb504e236435"
     ),
     "LibVLC-linux-x86_64.artifactbundle.zip": (
-        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.1/LibVLC-linux-x86_64.artifactbundle.zip",
+        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.2/LibVLC-linux-x86_64.artifactbundle.zip",
         checksum: "aaa5d85f92069e8d60449419517fc9de63e2eff881954dcc2bcafaa44c184499"
     ),
     "LibVLC-windows-x86_64.artifactbundle.zip": (
-        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.1/LibVLC-windows-x86_64.artifactbundle.zip",
+        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.2/LibVLC-windows-x86_64.artifactbundle.zip",
         checksum: "704fc9fbbc3eb688eaa9e50a3153a164052660ef2ca0f5ab9e7b7699f200fc48"
     ),
     "LibVLC.xcframework.zip": (
-        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.1/LibVLC.xcframework.zip",
+        url: "https://github.com/NucleantUI/NucleantVLC/releases/download/0.0.2/LibVLC.xcframework.zip",
         checksum: "ed159d6f1ceb78099d8436ff9b0e22d3de8b5662a8891b55c82a0aeda09931c0"
     ),
 ]
