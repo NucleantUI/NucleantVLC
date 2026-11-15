@@ -48,6 +48,13 @@ PLATFORMS: dict[str, dict] = {
         "scripts": ["fetch_vlc.py"],
         "archives": ["LibVLC.xcframework.zip"],
     },
+    **{
+        f"linux-{arch}": {
+            "scripts": ["fetch_vlc_linux.py"],
+            "archives": [f"LibVLC-linux-{arch}.artifactbundle.zip"],
+        }
+        for arch in ("x86_64", "aarch64")
+    },
     "windows-x86_64": {
         "scripts": ["fetch_vlc_windows.py"],
         "archives": ["LibVLC-windows-x86_64.artifactbundle.zip"],

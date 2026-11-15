@@ -108,7 +108,7 @@ The Lua scripts (playlist parsers for web sites) are left out: a binary target c
 
 The script fails unless every function the headers declare is one the library exports. Three VLM functions are the exception: no libvlc 3 build exports them, on any platform. The result is `LibVLC-android-<arm64-v8a|x86_64>.artifactbundle.zip`, the library and its headers. `libvlc.so` needs `libc++_shared.so`, the NDK one every Swift Android app ships already.
 
-**Linux.** VideoLAN ships no libvlc for Linux. The distribution's own is the one to link there (`libvlc-dev`; 3.0.20 on Ubuntu 24.04), so there is no archive for it.
+**Linux** (`scripts/fetch_vlc_linux.py`). VideoLAN ships no libvlc for Linux that fits: its snap is amd64 only, and its Flatpak needs a newer glibc than Ubuntu 24.04. So this is Ubuntu 24.04's own libvlc 3.0.20, from Ubuntu's archive as it was on a fixed date, for x86-64 and aarch64. `LibVLC-linux-<arch>.artifactbundle.zip` holds libvlc, its plugins and every library they need, except the machine's C/C++ runtime and GPU driver (as NucleantVulkan's Linux bundles), plus the headers and a `LibVLC` module map. Plugins that need the GPU driver (OpenGL and Vulkan video outputs) are left out. Every library is an artifact SwiftPM copies next to the product, found there through `$ORIGIN`, and the plugins through `VLC_PLUGIN_PATH`.
 
 ### Releases
 
