@@ -162,23 +162,9 @@ let package = Package(
                 "NucleantVLC",
                 .product(name: "NucleantUI", package: "NucleantUI"),
             ],
-            exclude: ["Resources/Icons/MaterialIcons-LICENSE.txt"],
-            // The player's icons: Material Icons SVGs (Apache 2.0) compiled
-            // in, so every platform has them with no file to find.
-            resources: [
-                .embedInCode("Resources/Icons/play_arrow.svg"),
-                .embedInCode("Resources/Icons/pause.svg"),
-                .embedInCode("Resources/Icons/replay_10.svg"),
-                .embedInCode("Resources/Icons/forward_10.svg"),
-                .embedInCode("Resources/Icons/volume_up.svg"),
-                .embedInCode("Resources/Icons/volume_off.svg"),
-                .embedInCode("Resources/Icons/subtitles.svg"),
-                .embedInCode("Resources/Icons/audiotrack.svg"),
-                .embedInCode("Resources/Icons/playlist_play.svg"),
-                .embedInCode("Resources/Icons/skip_previous.svg"),
-                .embedInCode("Resources/Icons/skip_next.svg"),
-                .embedInCode("Resources/Icons/close.svg"),
-            ]
+            // The player's icons: Material Icons SVGs (Apache 2.0), loaded
+            // by URL (Icons.swift).
+            resources: [.process("Resources/Icons")]
         ),
         .testTarget(
             name: "NucleantVLCTests",

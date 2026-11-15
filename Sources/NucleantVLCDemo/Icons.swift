@@ -4,8 +4,8 @@
 //
 //  The player's icons: Material Icons SVGs (Apache 2.0,
 //  Resources/Icons/MaterialIcons-LICENSE.txt) from the icon catalog,
-//  compiled into the app (`.embedInCode` in Package.swift), so every
-//  platform has them with no file to find at run time.
+//  the target's resources (`.process("Resources/Icons")` in Package.swift),
+//  loaded by URL.
 //
 
 import Foundation
@@ -34,26 +34,42 @@ enum PlayerIcon {
     }
 }
 
-/// The SVGs, each parsed once. They are this app's own files, so one that
-/// does not parse is a broken build.
+/// The SVGs, each loaded once. They are this app's own files, so one that
+/// is missing or does not parse is a broken build.
 @MainActor
 enum PlayerIconImages {
-    static let play = parse(PackageResources.play_arrow_svg)
-    static let pause = parse(PackageResources.pause_svg)
-    static let skipBack = parse(PackageResources.replay_10_svg)
-    static let skipForward = parse(PackageResources.forward_10_svg)
-    static let speaker = parse(PackageResources.volume_up_svg)
-    static let speakerMuted = parse(PackageResources.volume_off_svg)
-    static let subtitles = parse(PackageResources.subtitles_svg)
-    static let audio = parse(PackageResources.audiotrack_svg)
-    static let playlist = parse(PackageResources.playlist_play_svg)
-    static let previous = parse(PackageResources.skip_previous_svg)
-    static let next = parse(PackageResources.skip_next_svg)
-    static let close = parse(PackageResources.close_svg)
+    static let play = load("play_arrow")
+    static let pause = load("pause")
+    static let skipBack = load("replay_10")
+    static let skipForward = load("forward_10")
+    static let speaker = load("volume_up")
+    static let speakerMuted = load("volume_off")
+    static let subtitles = load("subtitles")
+    static let audio = load("audiotrack")
+    static let playlist = load("playlist_play")
+    static let previous = load("skip_previous")
+    static let next = load("skip_next")
+    static let close = load("close")
 
-    private static func parse(_ bytes: [UInt8]) -> SvgImage {
-        guard let image = SvgImage(data: Data(bytes)) else { fatalError("a bundled icon is not SVG") }
+    private static func load(_ name: String) -> SvgImage {
+        guard let url = url(of: name), let image = SvgImage(contentsOf: url) else {
+            fatalError("icon \(name).svg is missing or not SVG")
+        }
         return image
+    }
+
+    /// `name`.svg in the target's resources (`.process("Resources/Icons")`).
+    private static func url(of name: String) -> URL? {
+        #if os(Android)
+        // Not `Bundle.module`: on Android its accessor looks next to the
+        // executable (the zygote's) and fatalErrors. nucleant unpacks the
+        // resource bundles beside the app's files instead, at
+        // NUCLEANT_APP_PATH — as NucleantUI's own FontRegistry finds them.
+        guard let root = ProcessInfo.processInfo.environment["NUCLEANT_APP_PATH"] else { return nil }
+        return URL(fileURLWithPath: "\(root)/NucleantVLC_NucleantVLCDemo.resources/\(name).svg")
+        #else
+        return Bundle.module.url(forResource: name, withExtension: "svg")
+        #endif
     }
 }
 
