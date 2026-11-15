@@ -93,8 +93,10 @@ final class VlcFramePool: @unchecked Sendable {
         /// The `shownGeneration` it holds.
         var generation: Int
         var aspect: Double
-        /// For each destination column of the picture, its source column.
+        /// For each destination column of the picture, its source column —
+        /// for a source `columnsSourceWidth` wide.
         var columns: [Int32]
+        var columnsSourceWidth: Int
     }
 
     /// Route `player`'s video into this pool. The pool outlives the
@@ -265,7 +267,7 @@ final class VlcFramePool: @unchecked Sendable {
         if target == nil {
             let frame = VlcFrame(width: width, height: height)
             frame.clear()
-            target = Fitted(frame: frame, generation: -1, aspect: 0, columns: [])
+            target = Fitted(frame: frame, generation: -1, aspect: 0, columns: [], columnsSourceWidth: 0)
         }
         guard var target else { return nil }
         if target.generation == shownGeneration, target.aspect == aspect {
@@ -289,7 +291,15 @@ final class VlcFramePool: @unchecked Sendable {
         // A new shape leaves bars where the picture was: black again.
         if target.aspect != aspect || target.columns.count != fitWidth {
             target.frame.clear()
+        }
+        // The table follows the source as well as the picture's width: a
+        // video of the same shape at another size (1080p, then 720p) keeps
+        // the rectangle, and the old table would read past the new frame's
+        // rows — into the next row's pixels, which shows as the picture
+        // repeated.
+        if target.columns.count != fitWidth || target.columnsSourceWidth != source.width {
             target.columns = (0..<fitWidth).map { Int32($0 * source.width / fitWidth) }
+            target.columnsSourceWidth = source.width
         }
         target.columns.withUnsafeBufferPointer { columns in
             Self.scale(source, into: target.frame, x: x, y: y, width: fitWidth, height: fitHeight, columns: columns)
