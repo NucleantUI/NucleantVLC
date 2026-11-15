@@ -1,0 +1,7 @@
+// An explicit module map: SwiftPM takes LibVLC.h as an umbrella only with no
+// directory beside it, and libvlc's headers are in vlc/ (they include each
+// other as <vlc/...>).
+module LibVLC {
+    header "LibVLC.h"
+    export *
+}

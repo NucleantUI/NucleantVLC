@@ -138,13 +138,13 @@ public final class VlcMediaPlayer {
     /// Where playback is; setting it seeks (when `isSeekable`).
     public var time: Duration {
         get { .milliseconds(max(0, libvlc_media_player_get_time(handle))) }
-        set { libvlc_media_player_set_time(handle, Self.milliseconds(newValue)) }
+        set { seek(milliseconds: Self.milliseconds(newValue)) }
     }
 
     /// 0…1 through the media; setting it seeks.
     public var position: Double {
         get { Double(max(0, libvlc_media_player_get_position(handle))) }
-        set { libvlc_media_player_set_position(handle, Float(min(max(newValue, 0), 1))) }
+        set { seek(position: Float(min(max(newValue, 0), 1))) }
     }
 
     /// Playback speed, 1 normal. Not every media takes every rate.
