@@ -63,7 +63,7 @@ fastlane/test_output
 
 # NucleantVLC
 #
-# LibVLC.xcframework and the disk image it comes from — made by
+# LibVLC.xcframework and the VideoLAN downloads it comes from — made by
 # scripts/fetch_vlc.py, never committed (hundreds of MB).
 Dependencies/
 

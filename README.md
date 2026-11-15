@@ -27,7 +27,7 @@ struct Movie {
 }
 ```
 
-**macOS only for now** (x86-64 and arm64).
+**macOS only for now** (x86-64 and arm64). `LibVLC.xcframework` already has libvlc for iOS (arm64) and the iOS Simulator (arm64 and x86-64) as well.
 
 ## Build and run
 
@@ -41,20 +41,29 @@ Add `NUCLEANT_LOCAL_DEV=1` to build against the sibling `../NucleantUI` checkout
 
 ### Where libvlc comes from
 
-macOS has no separate libvlc SDK. VideoLAN ships libvlc inside VLC.app, and only Windows gets an SDK archive of its own. So `fetch_vlc.py` takes VideoLAN's signed 3.0.24 disk image, checks it against the published SHA-256, and copies four things out of `VLC.app/Contents/MacOS`:
+Neither macOS nor iOS has a separate libvlc SDK. VideoLAN ships libvlc inside its own builds, and only Windows gets an SDK archive of its own. So `fetch_vlc.py` takes two pinned VideoLAN releases and checks each one against the SHA-256 VideoLAN publishes for it.
+
+**macOS.** VideoLAN's signed 3.0.24 disk image. Four things are copied out of `VLC.app/Contents/MacOS`:
 
 - `libvlc`
 - `libvlccore`
 - the plugins (all but the app's own interface)
 - libvlc's headers
 
-Nothing else from the app is kept. They're packaged as `LibVLC.framework` inside `LibVLC.xcframework`:
+Nothing else from the app is kept.
 
-- **Libraries.** The dylibs are relinked to find each other inside the framework, then re-signed ad hoc.
+**iOS and the iOS Simulator.** The MobileVLCKit 3.7.5 release archive, the one VideoLAN's CocoaPods podspec points to (the podspec also gives its SHA-256). Its framework is libvlc 3.0.24 with every plugin built in, because iOS loads no plugins at run time. Two things are taken from it:
+
+- **The binary.** Thinned to arm64 for devices and to arm64 and x86-64 for the Simulator (no 32-bit ARM). VLCKit's own Objective-C layer is linked into the same binary and can't be separated, but its headers are left out, so Swift sees only libvlc.
+- **libvlc's headers, the ones that came with this binary.** VideoLAN's iOS libvlc carries patches from the libvlc 4 branch (attached thumbnails, recording, loudness, asynchronous stop, text renderer options). One existing function changes with them: `libvlc_video_set_deinterlace` takes an extra `deinterlace` argument. Its `libvlc_version.h` also still says 3.0.17, though the binary is 3.0.24.
+
+Each platform gets its own `LibVLC.framework` inside `LibVLC.xcframework`:
+
+- **Libraries.** On macOS the dylibs are relinked to find each other inside the framework, then re-signed ad hoc. On iOS the one binary is renamed `LibVLC` in a flat framework, as iOS frameworks are, and re-signed ad hoc.
 - **Headers.** Rewritten as `<LibVLC/…>`.
 - **Module map.** Lets Swift `import LibVLC`.
 
-`Package.swift` takes the xcframework as a binary target, so it links without unsafe flags. At runtime, `VlcInstance` points `VLC_PLUGIN_PATH` and `VLC_DATA_PATH` into the framework before the first instance starts.
+`Package.swift` takes the xcframework as a binary target, so it links without unsafe flags. At runtime on macOS, `VlcInstance` points `VLC_PLUGIN_PATH` and `VLC_DATA_PATH` into the framework before the first instance starts. iOS needs no such step, because the plugins are in the binary.
 
 ## The demo
 
