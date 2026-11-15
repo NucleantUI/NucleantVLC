@@ -32,23 +32,14 @@ struct Movie {
 ## Build and run
 
 ```sh
-uv run scripts/fetch_vlc.py      # libvlc 3.0.24 → Dependencies/LibVLC.xcframework (pinned + checksummed)
-swift build
-.build/debug/NucleantVLCDemo     # Blender's open movies, or: NucleantVLCDemo <files, folders, URLs>
+swift run NucleantVLCDemo        # Blender's open movies, or: NucleantVLCDemo <files, folders, URLs>
 ```
 
-Add `NUCLEANT_LOCAL_DEV=1` to build against the sibling `../NucleantUI` checkout instead of its GitHub release.
-
-Once NucleantVLC has a release, `Package.swift` takes LibVLC from it (see [Releases](#releases)), and `fetch_vlc.py` is only for trying a change to it. Zip the framework it makes into `Artifacts/`, as the release does, and build with `NUCLEANT_VLC_ARTIFACTS=1`:
-
-```sh
-mkdir -p Artifacts && ditto -c -k --keepParent Dependencies/LibVLC.xcframework Artifacts/LibVLC.xcframework.zip
-NUCLEANT_VLC_ARTIFACTS=1 swift build
-```
+libvlc comes prebuilt from the release's assets: SwiftPM downloads the archive for the platform it builds for (see [Releases](#releases)).
 
 ### Xcode: iOS, and macOS as an app
 
-[Xcode/NucleantVLC.xcodeproj](Xcode/NucleantVLC.xcodeproj) has the demo as an app, `NucleantVLCDemoApp`, for iOS (device and simulator) and macOS (a proper `.app`, with `LibVLC.framework` and its plugins embedded). It compiles `Sources/NucleantVLCDemo` unchanged and depends on this package (`path: ..`), so run `fetch_vlc.py` first. Open it, pick the **NucleantVLCDemoApp** scheme and a destination (a simulator, a device or *My Mac*), and run. The first build stops on NucleantUI's macro plugin until you choose *Trust & Enable*.
+[Xcode/NucleantVLC.xcodeproj](Xcode/NucleantVLC.xcodeproj) has the demo as an app, `NucleantVLCDemoApp`, for iOS (device and simulator) and macOS (a proper `.app`, with `LibVLC.framework` and its plugins embedded). It compiles `Sources/NucleantVLCDemo` unchanged and depends on this package (`path: ..`). Open it, pick the **NucleantVLCDemoApp** scheme and a destination (a simulator, a device or *My Mac*), and run. The first build stops on NucleantUI's macro plugin until you choose *Trust & Enable*.
 
 From the command line, where `-skipMacroValidation` stands in for that prompt:
 
@@ -67,7 +58,7 @@ The last command runs the package's tests in the simulator.
 
 **Known problems in the iOS 26 Simulator (2026-11-15).** The app doesn't draw there yet, for two reasons, one after the other:
 
-1. **With the released NucleantVulkan, which ships MoltenVK 1.2.11, it aborts at start.** MoltenVK's `vkCreateInstance` asks the simulator's Metal device for the texture buffer alignment of a pixel format the simulator doesn't have, and the simulator aborts on an assertion (`-[MTLSimDevice minimumTextureBufferAlignmentForPixelFormat:]: MTLPixelFormatInvalid is not supported on this device`). It is a hard assertion, not Metal API or shader validation, so turning those off doesn't help. MoltenVK 1.3.0 leaves those formats out. NucleantVulkan's `scripts/build_vulkan.py` builds 1.3.0 now, but no release ships it yet. To try it first, build MoltenVK with that script, zip `Dependencies/macos/MoltenVK.xcframework` into NucleantVulkan's `Artifacts/` as its release workflow does (with the release's other Apple archives beside it), and build with `NUCLEANT_LOCAL_DEV=1 NUCLEANT_VULKAN_ARTIFACTS=1`.
+1. **With MoltenVK 1.2.11 (NucleantVulkan before 0.1.2) it aborts at start.** MoltenVK's `vkCreateInstance` asks the simulator's Metal device for the texture buffer alignment of a pixel format the simulator doesn't have, and the simulator aborts on an assertion (`-[MTLSimDevice minimumTextureBufferAlignmentForPixelFormat:]: MTLPixelFormatInvalid is not supported on this device`). It is a hard assertion, not Metal API or shader validation, so turning those off doesn't help. NucleantVulkan 0.1.2 ships MoltenVK 1.3.0, which leaves those formats out.
 2. **With MoltenVK 1.3.0 the engine starts, but nothing is drawn.** The simulator's Metal device reports GPU Family Apple 2, and MoltenVK allows draws with a non-zero base vertex or base instance only from Apple 3. Skia's Vulkan backend uses both, so MoltenVK fails its command buffers (`VK_ERROR_FEATURE_NOT_PRESENT`) and the screen stays empty. iPhones and iPads from the A9 on are Apple 3 or newer.
 
 Both happen in NucleantUI's engine, not in NucleantVLC. NucleantUI's own examples hit the first too, and they draw through the same Skia backend. The simulator runs only what doesn't draw:
