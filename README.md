@@ -56,15 +56,12 @@ The last command runs the package's tests in the simulator.
 - **Signing.** The simulator and macOS need nothing. A device needs a team: set it under *Signing & Capabilities*, or as `DEVELOPMENT_TEAM` in `project.yml`.
 - **Changing the project.** [Xcode/project.yml](Xcode/project.yml) is the source. Regenerate the checked-in project with [xcodegen](https://github.com/yonaskolb/XcodeGen): `cd Xcode && xcodegen`.
 
-**Known problems in the iOS 26 Simulator (2026-11-15).** The app doesn't draw there yet, for two reasons, one after the other:
+**Known problems in the iOS 26 Simulator (2026-11-15).** The video plays there, letterboxed as on a device, but none of the controls show:
 
-1. **With MoltenVK 1.2.11 (NucleantVulkan before 0.1.2) it aborts at start.** MoltenVK's `vkCreateInstance` asks the simulator's Metal device for the texture buffer alignment of a pixel format the simulator doesn't have, and the simulator aborts on an assertion (`-[MTLSimDevice minimumTextureBufferAlignmentForPixelFormat:]: MTLPixelFormatInvalid is not supported on this device`). It is a hard assertion, not Metal API or shader validation, so turning those off doesn't help. NucleantVulkan 0.1.2 ships MoltenVK 1.3.0, which leaves those formats out.
-2. **With MoltenVK 1.3.0 the engine starts, but nothing is drawn.** The simulator's Metal device reports GPU Family Apple 2, and MoltenVK allows draws with a non-zero base vertex or base instance only from Apple 3. Skia's Vulkan backend uses both, so MoltenVK fails its command buffers (`VK_ERROR_FEATURE_NOT_PRESENT`) and the screen stays empty. iPhones and iPads from the A9 on are Apple 3 or newer.
+1. **With MoltenVK 1.2.11 (NucleantVulkan before 0.1.2) it aborted at start.** MoltenVK's `vkCreateInstance` asks the simulator's Metal device for the texture buffer alignment of a pixel format the simulator doesn't have, and the simulator aborts on an assertion (`-[MTLSimDevice minimumTextureBufferAlignmentForPixelFormat:]: MTLPixelFormatInvalid is not supported on this device`). It is a hard assertion, not Metal API or shader validation, so turning those off doesn't help. NucleantVulkan 0.1.2 ships MoltenVK 1.3.0, which leaves those formats out.
+2. **With MoltenVK 1.3.0 the engine starts, but what Skia draws doesn't show.** The simulator's Metal device reports GPU Family Apple 2, and MoltenVK allows draws with a non-zero base vertex or base instance only from Apple 3. Skia's Vulkan backend uses both, so MoltenVK fails the command buffers Skia records (`VK_ERROR_FEATURE_NOT_PRESENT`). The video still gets to the window, because its texture isn't drawn through Skia. The controls and their text are, so they stay invisible. iPhones and iPads from the A9 on are Apple 3 or newer.
 
-Both happen in NucleantUI's engine, not in NucleantVLC. NucleantUI's own examples hit the first too, and they draw through the same Skia backend. The simulator runs only what doesn't draw:
-
-- libvlc itself, which the package tests cover;
-- the frame path up to the IOSurface (`VlcFramePoolTests+iOS`).
+Both happen in NucleantUI's engine, not in NucleantVLC, and NucleantUI's own examples hit them too. The package tests run in the simulator: libvlc itself, and the frame path up to the IOSurface (`VlcFramePoolTests+iOS`).
 
 On this Intel Mac the player and frame-pool tests pass one at a time. When they all run at once, several time out waiting for frames, because every test decodes on the CPU at the same time. A real device is untested.
 
